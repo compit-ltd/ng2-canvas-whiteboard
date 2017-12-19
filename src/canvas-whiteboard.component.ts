@@ -8,7 +8,7 @@ import {
     OnInit,
     OnChanges, OnDestroy, AfterViewInit
 } from '@angular/core';
-import {CanvasWhiteboardUpdate, UPDATE_TYPE} from "./canvas-whiteboard-update.model";
+import { CanvasWhiteboardUpdate, UPDATE_TYPE, CanvasCoordinates } from "./canvas-whiteboard-update.model";
 import {DEFAULT_TEMPLATE, DEFAULT_STYLES} from "./template";
 import {CanvasWhiteboardService} from "./canvas-whiteboard.service";
 import {Subscription} from "rxjs/Subscription";
@@ -42,6 +42,13 @@ export interface CanvasWhiteboardOptions {
     colorPickerEnabled?: boolean
     shouldDownloadDrawing?: boolean
     startingColor?: string
+    enableCors?: boolean
+    polygonButtonEnabled?: boolean
+    polygonButtonClass?: string
+    polygonButtonText?: string
+    polygonBorderColor?: string
+    polygonFillColor?: string
+    polygonClosePixelRadius?: number
 }
 
 @Component({
@@ -75,6 +82,7 @@ export class CanvasWhiteboardComponent implements OnInit, AfterViewInit, OnChang
     @Input() undoButtonEnabled: boolean = false;
     @Input() redoButtonEnabled: boolean = false;
     @Input() saveDataButtonEnabled: boolean = false;
+    @Input() enableCors: boolean = false;
 
     @Input() shouldDownloadDrawing: boolean = true;
 
@@ -82,6 +90,13 @@ export class CanvasWhiteboardComponent implements OnInit, AfterViewInit, OnChang
 
     @Input() lineWidth: number = 2;
     @Input() strokeColor: string = "rgb(216, 184, 0)";
+    @Input() polygonBorderColor: string = "rgb(216, 184, 0)";
+    @Input() polygonFillColor: string = "rgb(216, 184, 0)";
+    @Input() polygonClosePixelRadius: number = 5;
+
+    @Input() polygonButtonEnabled: boolean = true;
+    @Input() polygonButtonClass: string;
+    @Input() polygonButtonText: string = '';
 
     @Input() startingColor: string = "#fff";
 
@@ -100,6 +115,11 @@ export class CanvasWhiteboardComponent implements OnInit, AfterViewInit, OnChang
 
     private _shouldDraw = false;
     private _canDraw = true;
+
+    private _shouldDrawPolygon = false;
+    private _canDrawPolygon = true;
+
+    private _polygonPoints: CanvasCoordinates[] = [];
 
     private _clientDragging = false;
 
@@ -173,6 +193,13 @@ export class CanvasWhiteboardComponent implements OnInit, AfterViewInit, OnChang
             if (!this._isNullOrUndefined(options.strokeColor)) this.strokeColor = options.strokeColor;
             if (!this._isNullOrUndefined(options.shouldDownloadDrawing)) this.shouldDownloadDrawing = options.shouldDownloadDrawing;
             if (!this._isNullOrUndefined(options.startingColor)) this.startingColor = options.startingColor;
+            if (!this._isNullOrUndefined(options.enableCors)) this.enableCors = options.enableCors;
+            if (!this._isNullOrUndefined(options.polygonBorderColor)) this.polygonBorderColor = options.polygonBorderColor;
+            if (!this._isNullOrUndefined(options.polygonFillColor)) this.polygonFillColor = options.polygonFillColor;
+            if (!this._isNullOrUndefined(options.polygonClosePixelRadius)) this.polygonClosePixelRadius = options.polygonClosePixelRadius;
+            if (!this._isNullOrUndefined(options.polygonButtonEnabled)) this.polygonButtonEnabled = options.polygonButtonEnabled;
+            if (!this._isNullOrUndefined(options.polygonButtonClass)) this.polygonButtonClass = options.polygonButtonClass;
+            if (!this._isNullOrUndefined(options.polygonButtonText)) this.polygonButtonText = options.polygonButtonText;
         }
     }
 
@@ -255,6 +282,8 @@ export class CanvasWhiteboardComponent implements OnInit, AfterViewInit, OnChang
             callbackFn && callbackFn();
             this.onImageLoaded.emit(true);
         });
+        if (this.enableCors)
+            this._imageElement.crossOrigin = "Anonymous";
         this._imageElement.src = this.imageUrl;
     }
 
@@ -332,6 +361,28 @@ export class CanvasWhiteboardComponent implements OnInit, AfterViewInit, OnChang
      */
     setShouldDraw(shouldDraw: boolean): void {
         this._shouldDraw = shouldDraw;
+    }
+
+    /**
+     * Returns a value of whether the user clicked the draw button on the canvas.
+     */
+    getShouldDrawPolygon(): boolean {
+        return this._shouldDrawPolygon;
+    }
+
+    /**
+     * Toggles drawing on the canvas. It is called via the draw button on the canvas.
+     */
+    toggleShouldDrawPolygon(): void {
+        this._shouldDrawPolygon = !this._shouldDrawPolygon;
+    }
+
+    /**
+     * Set if drawing is enabled from the client using the canvas
+     * @param {boolean} shouldDraw
+     */
+    setShouldDrawPolygon(shouldDrawPolygon: boolean): void {
+        this._shouldDrawPolygon = shouldDrawPolygon;
     }
 
     /**
@@ -441,50 +492,104 @@ export class CanvasWhiteboardComponent implements OnInit, AfterViewInit, OnChang
      *
      */
     canvasUserEvents(event: any): void {
-        if (!this._shouldDraw || !this._canDraw) {
+        if (!this._shouldDraw || !this._canDraw || !this._shouldDrawPolygon || !this._canDrawPolygon) {
             //Ignore all if we didn't click the _draw! button or the image did not load
             return;
         }
 
-        if ((event.type === 'mousemove' || event.type === 'touchmove' || event.type === 'mouseout') && !this._clientDragging) {
-            // Ignore mouse move Events if we're not dragging
-            return;
+        if (this._shouldDraw) {
+            if ((event.type === 'mousemove' || event.type === 'touchmove' || event.type === 'mouseout') && !this._clientDragging) {
+                // Ignore mouse move Events if we're not dragging
+                return;
+            }
+
+            if (event.target == this.canvas.nativeElement) {
+                event.preventDefault();
+            }
+
+            let update: CanvasWhiteboardUpdate;
+            let updateType: number;
+            let eventPosition: EventPositionPoint = this._getCanvasEventPosition(event);
+
+            switch (event.type) {
+                case 'mousedown':
+                case 'touchstart':
+                    this._clientDragging = true;
+                    this._lastUUID = eventPosition.x + eventPosition.y + Math.random().toString(36);
+                    updateType = UPDATE_TYPE.start;
+                    break;
+                case 'mousemove':
+                case 'touchmove':
+                    if (!this._clientDragging) {
+                        return;
+                    }
+                    updateType = UPDATE_TYPE.drag;
+                    break;
+                case 'touchcancel':
+                case 'mouseup':
+                case 'touchend':
+                case 'mouseout':
+                    this._clientDragging = false;
+                    updateType = UPDATE_TYPE.stop;
+                    break;
+            }
+
+            update = new CanvasWhiteboardUpdate(eventPosition.x, eventPosition.y, updateType, this.strokeColor, this._lastUUID, true);
+            this._draw(update);
+            this._prepareToSendUpdate(update, eventPosition.x, eventPosition.y);
+        } else if (this._shouldDrawPolygon) {
+            if (event.type !== 'touchend' && event.type !== 'mouseup' && event.type !== 'mouseout') {
+                // Ignore mouse move Events if we're not dragging
+                return;
+            }
+
+            if (event.target == this.canvas.nativeElement) {
+                event.preventDefault();
+            }
+
+            let update: CanvasWhiteboardUpdate;
+            let updateType: number;
+            let eventPosition: EventPositionPoint = this._getCanvasEventPosition(event);
+
+            switch (event.type) {
+                case 'mousedown':
+                case 'touchstart':
+                case 'mousemove':
+                case 'touchmove':
+                case 'touchcancel':
+                    break;
+                case 'touchend':
+                case 'mouseup':
+                    this._lastUUID = eventPosition.x + eventPosition.y + Math.random().toString(36);
+                    if (this._polygonPoints.length !== 0) {
+                        // Check if we need to close the polygon
+                        if (Math.hypot(eventPosition.x - this._polygonPoints[0].x,
+                                eventPosition.y - this._polygonPoints[0].y) < this.polygonClosePixelRadius ||
+                            Math.hypot(eventPosition.x - this._polygonPoints[this._polygonPoints.length - 1].x,
+                                eventPosition.y - this._polygonPoints[this._polygonPoints.length - 1].y) < this.polygonClosePixelRadius) {
+                            // Close polygon
+                            updateType = UPDATE_TYPE.polygonClose;
+                            update = new CanvasWhiteboardUpdate(eventPosition.x, eventPosition.y, updateType, this.polygonBorderColor, this._lastUUID, true);
+                            this._polygonPoints = [];
+                        } else {
+                            this._polygonPoints.push(new CanvasCoordinates(eventPosition.x, eventPosition.y));
+                            updateType = UPDATE_TYPE.polygonPoint;
+                            update = new CanvasWhiteboardUpdate(eventPosition.x, eventPosition.y, updateType, this.polygonBorderColor, this._lastUUID, true);
+                        }
+                    }
+                    break;
+                case 'mouseout':
+                    this._lastUUID = eventPosition.x + eventPosition.y + Math.random().toString(36);
+                    this._clientDragging = false;
+                    updateType = UPDATE_TYPE.stop;
+                    update = new CanvasWhiteboardUpdate(eventPosition.x, eventPosition.y, updateType, this.strokeColor, this._lastUUID, true);
+                    break;
+            }
+
+
+            this._draw(update);
+            this._prepareToSendUpdate(update, eventPosition.x, eventPosition.y);
         }
-
-        if (event.target == this.canvas.nativeElement) {
-            event.preventDefault();
-        }
-
-        let update: CanvasWhiteboardUpdate;
-        let updateType: number;
-        let eventPosition: EventPositionPoint = this._getCanvasEventPosition(event);
-
-        switch (event.type) {
-            case 'mousedown':
-            case 'touchstart':
-                this._clientDragging = true;
-                this._lastUUID = eventPosition.x + eventPosition.y + Math.random().toString(36);
-                updateType = UPDATE_TYPE.start;
-                break;
-            case 'mousemove':
-            case 'touchmove':
-                if (!this._clientDragging) {
-                    return;
-                }
-                updateType = UPDATE_TYPE.drag;
-                break;
-            case 'touchcancel':
-            case 'mouseup':
-            case 'touchend':
-            case 'mouseout':
-                this._clientDragging = false;
-                updateType = UPDATE_TYPE.stop;
-                break;
-        }
-
-        update = new CanvasWhiteboardUpdate(eventPosition.x, eventPosition.y, updateType, this.strokeColor, this._lastUUID, true);
-        this._draw(update);
-        this._prepareToSendUpdate(update, eventPosition.x, eventPosition.y);
     }
 
     /**
@@ -615,6 +720,16 @@ export class CanvasWhiteboardComponent implements OnInit, AfterViewInit, OnChang
         } else if (update.getType() === UPDATE_TYPE.stop && update.getVisible()) {
             this._undoStack.push(update.getUUID());
             delete this._lastPositionForUUID[update.getUUID()];
+        } else if (update.getType() === UPDATE_TYPE.polygonPoint) {
+            if (this._drawHistory[this._drawHistory.length - 2].getType() === UPDATE_TYPE.polygonPoint) {
+                this.context.lineTo(update.getX(), update.getY());
+            } else {
+                this.context.moveTo(update.getX(), update.getY());
+            }
+        } else if (update.getType() === UPDATE_TYPE.polygonClose) {
+            this.context.closePath();
+            this.context.stroke();
+            this.context.restore();
         }
 
         if (update.getType() === UPDATE_TYPE.start || update.getType() === UPDATE_TYPE.drag) {

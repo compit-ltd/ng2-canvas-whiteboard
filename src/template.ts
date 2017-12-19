@@ -9,6 +9,13 @@ export const DEFAULT_TEMPLATE = `
                    {{drawButtonText}}
         </button>
         
+        <button *ngIf="polygonButtonEnabled" (click)="toggleShouldDrawPolygon()"
+                 [class.canvas_whiteboard_button-draw_animated]="getShouldDrawPolygon()"
+                 class="canvas_whiteboard_button canvas_whiteboard_button-draw-polygon" type="button">
+                <i [class]="polygonButtonClass" aria-hidden="true"></i>
+                   {{polygonButtonText}}
+        </button>
+        
         <button *ngIf="clearButtonEnabled" (click)="clearCanvasLocal()" type="button" class="canvas_whiteboard_button canvas_whiteboard_button-clear">
             <i [class]="clearButtonClass" aria-hidden="true"></i>
                     {{clearButtonText}}

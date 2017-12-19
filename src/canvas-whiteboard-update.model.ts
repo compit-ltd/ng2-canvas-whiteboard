@@ -1,8 +1,36 @@
 export const UPDATE_TYPE = {
     "start": 0,
     "drag": 1,
-    "stop": 2
+    "stop": 2,
+    "polygonPoint": 3,
+    "polygonClose": 4
 };
+
+export class CanvasCoordinates {
+    private _x: number;
+    private _y: number;
+
+    constructor(x: number, y: number) {
+        this._x = x;
+        this._y = y;
+    }
+
+    set x(newX: number) {
+        this._x = newX;
+    }
+
+    get x() {
+        return this._x;
+    }
+
+    set y(newY: number) {
+        this._y = newY;
+    }
+
+    get y() {
+        return this._y;
+    }
+}
 
 export class CanvasWhiteboardUpdate {
     private _x: number;
