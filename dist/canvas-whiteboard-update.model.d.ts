@@ -2,7 +2,16 @@ export declare const UPDATE_TYPE: {
     "start": number;
     "drag": number;
     "stop": number;
+    "polygonPoint": number;
+    "polygonClose": number;
 };
+export declare class CanvasCoordinates {
+    private _x;
+    private _y;
+    constructor(x: number, y: number);
+    x: number;
+    y: number;
+}
 export declare class CanvasWhiteboardUpdate {
     private _x;
     private _y;

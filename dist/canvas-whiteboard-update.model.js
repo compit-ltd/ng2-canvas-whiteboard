@@ -3,8 +3,38 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UPDATE_TYPE = {
     "start": 0,
     "drag": 1,
-    "stop": 2
+    "stop": 2,
+    "polygonPoint": 3,
+    "polygonClose": 4
 };
+var CanvasCoordinates = (function () {
+    function CanvasCoordinates(x, y) {
+        this._x = x;
+        this._y = y;
+    }
+    Object.defineProperty(CanvasCoordinates.prototype, "x", {
+        get: function () {
+            return this._x;
+        },
+        set: function (newX) {
+            this._x = newX;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(CanvasCoordinates.prototype, "y", {
+        get: function () {
+            return this._y;
+        },
+        set: function (newY) {
+            this._y = newY;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return CanvasCoordinates;
+}());
+exports.CanvasCoordinates = CanvasCoordinates;
 var CanvasWhiteboardUpdate = (function () {
     function CanvasWhiteboardUpdate(x, y, type, strokeColor, uuid, visible) {
         this._x = x;

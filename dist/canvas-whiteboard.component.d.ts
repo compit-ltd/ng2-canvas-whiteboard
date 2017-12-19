@@ -25,6 +25,13 @@ export interface CanvasWhiteboardOptions {
     colorPickerEnabled?: boolean;
     shouldDownloadDrawing?: boolean;
     startingColor?: string;
+    enableCors?: boolean;
+    polygonButtonEnabled?: boolean;
+    polygonButtonClass?: string;
+    polygonButtonText?: string;
+    polygonBorderColor?: string;
+    polygonFillColor?: string;
+    polygonClosePixelRadius?: number;
 }
 export declare class CanvasWhiteboardComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
     private _canvasWhiteboardService;
@@ -47,10 +54,17 @@ export declare class CanvasWhiteboardComponent implements OnInit, AfterViewInit,
     undoButtonEnabled: boolean;
     redoButtonEnabled: boolean;
     saveDataButtonEnabled: boolean;
+    enableCors: boolean;
     shouldDownloadDrawing: boolean;
     colorPickerEnabled: boolean;
     lineWidth: number;
     strokeColor: string;
+    polygonBorderColor: string;
+    polygonFillColor: string;
+    polygonClosePixelRadius: number;
+    polygonButtonEnabled: boolean;
+    polygonButtonClass: string;
+    polygonButtonText: string;
     startingColor: string;
     onClear: EventEmitter<any>;
     onUndo: EventEmitter<any>;
@@ -63,6 +77,9 @@ export declare class CanvasWhiteboardComponent implements OnInit, AfterViewInit,
     private _imageElement;
     private _shouldDraw;
     private _canDraw;
+    private _shouldDrawPolygon;
+    private _canDrawPolygon;
+    private _polygonPoints;
     private _clientDragging;
     private _lastUUID;
     private _lastPositionForUUID;
@@ -159,6 +176,19 @@ export declare class CanvasWhiteboardComponent implements OnInit, AfterViewInit,
      * @param {boolean} shouldDraw
      */
     setShouldDraw(shouldDraw: boolean): void;
+    /**
+     * Returns a value of whether the user clicked the draw button on the canvas.
+     */
+    getShouldDrawPolygon(): boolean;
+    /**
+     * Toggles drawing on the canvas. It is called via the draw button on the canvas.
+     */
+    toggleShouldDrawPolygon(): void;
+    /**
+     * Set if drawing is enabled from the client using the canvas
+     * @param {boolean} shouldDraw
+     */
+    setShouldDrawPolygon(shouldDrawPolygon: boolean): void;
     /**
      * Replaces the drawing color with a new color
      * The format should be ("#ffffff" or "rgb(r,g,b,a?)")
