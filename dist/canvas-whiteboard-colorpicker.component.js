@@ -10,7 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var core_1 = require("@angular/core");
-var CanvasWhiteboardColorPickerComponent = (function () {
+var CanvasWhiteboardColorPickerComponent = /** @class */ (function () {
     function CanvasWhiteboardColorPickerComponent(_elementRef) {
         this._elementRef = _elementRef;
         this.selectedColor = "rgb(0,0,0)";

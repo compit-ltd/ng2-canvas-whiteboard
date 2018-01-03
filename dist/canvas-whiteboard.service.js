@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Subject_1 = require("rxjs/Subject");
-var CanvasWhiteboardService = (function () {
+var CanvasWhiteboardService = /** @class */ (function () {
     function CanvasWhiteboardService() {
         this._canvasDrawSubject = new Subject_1.Subject();
         this.canvasDrawSubject$ = this._canvasDrawSubject.asObservable();

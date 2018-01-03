@@ -1,6 +1,6 @@
 {
   "name": "ng2-canvas-whiteboard-compit",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.1.37",
   "description": "A Canvas component for Angular2 which supports free drawing and polygons.",
   "main": "index.js",
   "scripts": {
@@ -31,8 +31,9 @@
     "canvas colorpicker"
   ],
   "dependencies": {
-    "@angular/compiler": "^5.1.1",
-    "@angular/core": "^5.1.1",
+    "@angular/compiler": "^5.0.0",
+    "@angular/core": "^5.0.0",
+    "@angular/common": "^5.0.0",
     "@angular/compiler-cli": "^5.0.0",
     "typescript": "^2.4.2"
   },

@@ -5,9 +5,11 @@ exports.UPDATE_TYPE = {
     "drag": 1,
     "stop": 2,
     "polygonPoint": 3,
-    "polygonClose": 4
+    "polygonClose": 4,
+    "lineStart": 5,
+    "lineEnd": 6
 };
-var CanvasCoordinates = (function () {
+var CanvasCoordinates = /** @class */ (function () {
     function CanvasCoordinates(x, y) {
         this._x = x;
         this._y = y;
@@ -35,7 +37,7 @@ var CanvasCoordinates = (function () {
     return CanvasCoordinates;
 }());
 exports.CanvasCoordinates = CanvasCoordinates;
-var CanvasWhiteboardUpdate = (function () {
+var CanvasWhiteboardUpdate = /** @class */ (function () {
     function CanvasWhiteboardUpdate(x, y, type, strokeColor, uuid, visible) {
         this._x = x;
         this._y = y;

@@ -4,6 +4,8 @@ export declare const UPDATE_TYPE: {
     "stop": number;
     "polygonPoint": number;
     "polygonClose": number;
+    "lineStart": number;
+    "lineEnd": number;
 };
 export declare class CanvasCoordinates {
     private _x;

@@ -17,7 +17,7 @@ var canvas_whiteboard_update_model_1 = require("./canvas-whiteboard-update.model
 exports.CanvasWhiteboardUpdate = canvas_whiteboard_update_model_1.CanvasWhiteboardUpdate;
 var canvas_whiteboard_service_2 = require("./canvas-whiteboard.service");
 exports.CanvasWhiteboardService = canvas_whiteboard_service_2.CanvasWhiteboardService;
-var CanvasWhiteboardModule = (function () {
+var CanvasWhiteboardModule = /** @class */ (function () {
     function CanvasWhiteboardModule() {
     }
     CanvasWhiteboardModule = __decorate([

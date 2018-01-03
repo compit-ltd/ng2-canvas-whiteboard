@@ -25,13 +25,19 @@ export interface CanvasWhiteboardOptions {
     colorPickerEnabled?: boolean;
     shouldDownloadDrawing?: boolean;
     startingColor?: string;
-    enableCors?: boolean;
     polygonButtonEnabled?: boolean;
     polygonButtonClass?: string;
     polygonButtonText?: string;
     polygonBorderColor?: string;
     polygonFillColor?: string;
     polygonClosePixelRadius?: number;
+    lineButtonEnabled?: boolean;
+    lineButtonClass?: string;
+    lineButtonText?: string;
+    eraseButtonEnabled?: boolean;
+    eraseButtonClass?: string;
+    eraseButtonText?: string;
+    buttonAnimation?: boolean;
 }
 export declare class CanvasWhiteboardComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
     private _canvasWhiteboardService;
@@ -65,6 +71,13 @@ export declare class CanvasWhiteboardComponent implements OnInit, AfterViewInit,
     polygonButtonEnabled: boolean;
     polygonButtonClass: string;
     polygonButtonText: string;
+    lineButtonEnabled: boolean;
+    lineButtonClass: string;
+    lineButtonText: string;
+    eraseButtonEnabled: boolean;
+    eraseButtonClass: string;
+    eraseButtonText: string;
+    buttonAnimation: boolean;
     startingColor: string;
     onClear: EventEmitter<any>;
     onUndo: EventEmitter<any>;
@@ -79,6 +92,7 @@ export declare class CanvasWhiteboardComponent implements OnInit, AfterViewInit,
     private _canDraw;
     private _shouldDrawPolygon;
     private _canDrawPolygon;
+    private _canDrawLine;
     private _polygonPoints;
     private _clientDragging;
     private _lastUUID;
@@ -90,6 +104,8 @@ export declare class CanvasWhiteboardComponent implements OnInit, AfterViewInit,
     private _updatesNotDrawn;
     private _updateTimeout;
     private _canvasWhiteboardServiceSubscriptions;
+    private _shouldDrawLine;
+    private _shouldErase;
     constructor(_canvasWhiteboardService: CanvasWhiteboardService);
     /**
      * Initialize the canvas drawing context. If we have an aspect ratio set up, the canvas will resize
@@ -172,23 +188,49 @@ export declare class CanvasWhiteboardComponent implements OnInit, AfterViewInit,
      */
     toggleShouldDraw(): void;
     /**
-     * Set if drawing is enabled from the client using the canvas
+     * Set if polygon drawing is enabled from the client using the canvas
      * @param {boolean} shouldDraw
      */
     setShouldDraw(shouldDraw: boolean): void;
     /**
-     * Returns a value of whether the user clicked the draw button on the canvas.
+     * Returns a value of whether the user clicked the polygon button on the canvas.
      */
     getShouldDrawPolygon(): boolean;
     /**
-     * Toggles drawing on the canvas. It is called via the draw button on the canvas.
+     * Toggles polygon drawing on the canvas. It is called via the polygon button on the canvas.
      */
     toggleShouldDrawPolygon(): void;
     /**
-     * Set if drawing is enabled from the client using the canvas
-     * @param {boolean} shouldDraw
+     * Set if line drawing is enabled from the client using the canvas
+     * @param {boolean} shouldDrawPolygon
      */
     setShouldDrawPolygon(shouldDrawPolygon: boolean): void;
+    /**
+     * Set if line drawing is enabled from the client using the canvas
+     * @param {boolean} shouldDrawPolygon
+     */
+    setShouldDrawLine(shouldDrawLine: boolean): void;
+    /**
+     * Returns a value of whether the user clicked the line button on the canvas.
+     */
+    getShouldDrawLine(): boolean;
+    /**
+     * Toggles line drawing on the canvas. It is called via the line button on the canvas.
+     */
+    toggleShouldDrawLine(): void;
+    /**
+     * Set if erasing is enabled from the client using the canvas
+     * @param {boolean} shouldDrawPolygon
+     */
+    setShouldErase(shouldErase: boolean): void;
+    /**
+     * Returns a value of whether the user clicked the erase button on the canvas.
+     */
+    getShouldErase(): boolean;
+    /**
+     * Toggles erase on the canvas. It is called via the erase button on the canvas.
+     */
+    toggleShouldErase(): void;
     /**
      * Replaces the drawing color with a new color
      * The format should be ("#ffffff" or "rgb(r,g,b,a?)")
@@ -215,7 +257,7 @@ export declare class CanvasWhiteboardComponent implements OnInit, AfterViewInit,
      * @param {string} updateUUID
      * @private
      */
-    private _undoCanvas(updateUUID);
+    private _undoCanvas(updateUUIDs);
     /**
      * This method is invoked by the redo button on the canvas screen
      * It calls the global redo method and emits a notification after redoing
@@ -234,7 +276,7 @@ export declare class CanvasWhiteboardComponent implements OnInit, AfterViewInit,
      * @param {string} updateUUID
      * @private
      */
-    private _redoCanvas(updateUUID);
+    private _redoCanvas(updateUUIDs);
     /**
      * Catches the Mouse and Touch events made on the canvas.
      * If drawing is disabled (If an image exists but it's not loaded, or the user did not click Draw),

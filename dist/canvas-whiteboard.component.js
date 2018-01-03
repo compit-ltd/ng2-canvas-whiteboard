@@ -13,7 +13,7 @@ var core_1 = require("@angular/core");
 var canvas_whiteboard_update_model_1 = require("./canvas-whiteboard-update.model");
 var template_1 = require("./template");
 var canvas_whiteboard_service_1 = require("./canvas-whiteboard.service");
-var CanvasWhiteboardComponent = (function () {
+var CanvasWhiteboardComponent = /** @class */ (function () {
     function CanvasWhiteboardComponent(_canvasWhiteboardService) {
         this._canvasWhiteboardService = _canvasWhiteboardService;
         //Number of ms to wait before sending out the updates as an array
@@ -38,6 +38,11 @@ var CanvasWhiteboardComponent = (function () {
         this.polygonClosePixelRadius = 5;
         this.polygonButtonEnabled = true;
         this.polygonButtonText = '';
+        this.lineButtonEnabled = true;
+        this.lineButtonText = '';
+        this.eraseButtonEnabled = false;
+        this.eraseButtonText = '';
+        this.buttonAnimation = true;
         this.startingColor = "#fff";
         this.onClear = new core_1.EventEmitter();
         this.onUndo = new core_1.EventEmitter();
@@ -49,6 +54,7 @@ var CanvasWhiteboardComponent = (function () {
         this._canDraw = true;
         this._shouldDrawPolygon = false;
         this._canDrawPolygon = true;
+        this._canDrawLine = true;
         this._polygonPoints = [];
         this._clientDragging = false;
         this._lastPositionForUUID = {};
@@ -58,6 +64,8 @@ var CanvasWhiteboardComponent = (function () {
         this._batchUpdates = [];
         this._updatesNotDrawn = [];
         this._canvasWhiteboardServiceSubscriptions = [];
+        this._shouldDrawLine = false;
+        this._shouldErase = false;
     }
     /**
      * Initialize the canvas drawing context. If we have an aspect ratio set up, the canvas will resize
@@ -134,8 +142,6 @@ var CanvasWhiteboardComponent = (function () {
                 this.shouldDownloadDrawing = options.shouldDownloadDrawing;
             if (!this._isNullOrUndefined(options.startingColor))
                 this.startingColor = options.startingColor;
-            if (!this._isNullOrUndefined(options.enableCors))
-                this.enableCors = options.enableCors;
             if (!this._isNullOrUndefined(options.polygonBorderColor))
                 this.polygonBorderColor = options.polygonBorderColor;
             if (!this._isNullOrUndefined(options.polygonFillColor))
@@ -148,6 +154,22 @@ var CanvasWhiteboardComponent = (function () {
                 this.polygonButtonClass = options.polygonButtonClass;
             if (!this._isNullOrUndefined(options.polygonButtonText))
                 this.polygonButtonText = options.polygonButtonText;
+            if (!this._isNullOrUndefined(options.buttonAnimation))
+                this.buttonAnimation = options.buttonAnimation;
+            if (!this._isNullOrUndefined(options.lineButtonEnabled))
+                this.lineButtonEnabled = options.lineButtonEnabled;
+            if (!this._isNullOrUndefined(options.lineButtonClass))
+                this.lineButtonClass = options.lineButtonClass;
+            if (!this._isNullOrUndefined(options.lineButtonText))
+                this.lineButtonText = options.lineButtonText;
+            if (!this._isNullOrUndefined(options.eraseButtonEnabled))
+                this.eraseButtonEnabled = options.eraseButtonEnabled;
+            if (!this._isNullOrUndefined(options.eraseButtonClass))
+                this.eraseButtonClass = options.eraseButtonClass;
+            if (!this._isNullOrUndefined(options.eraseButtonText))
+                this.eraseButtonText = options.eraseButtonText;
+            if (!this._isNullOrUndefined(options.buttonAnimation))
+                this.buttonAnimation = options.buttonAnimation;
         }
     };
     CanvasWhiteboardComponent.prototype._isNullOrUndefined = function (property) {
@@ -292,32 +314,94 @@ var CanvasWhiteboardComponent = (function () {
      */
     CanvasWhiteboardComponent.prototype.toggleShouldDraw = function () {
         this._shouldDraw = !this._shouldDraw;
+        this._shouldDrawPolygon = false;
+        this._shouldDrawLine = false;
+        this._shouldErase = false;
     };
     /**
-     * Set if drawing is enabled from the client using the canvas
+     * Set if polygon drawing is enabled from the client using the canvas
      * @param {boolean} shouldDraw
      */
     CanvasWhiteboardComponent.prototype.setShouldDraw = function (shouldDraw) {
         this._shouldDraw = shouldDraw;
+        this._shouldDrawPolygon = false;
+        this._shouldDrawLine = false;
+        this._shouldErase = false;
     };
     /**
-     * Returns a value of whether the user clicked the draw button on the canvas.
+     * Returns a value of whether the user clicked the polygon button on the canvas.
      */
     CanvasWhiteboardComponent.prototype.getShouldDrawPolygon = function () {
         return this._shouldDrawPolygon;
     };
     /**
-     * Toggles drawing on the canvas. It is called via the draw button on the canvas.
+     * Toggles polygon drawing on the canvas. It is called via the polygon button on the canvas.
      */
     CanvasWhiteboardComponent.prototype.toggleShouldDrawPolygon = function () {
         this._shouldDrawPolygon = !this._shouldDrawPolygon;
+        this._shouldDraw = false;
+        this._shouldDrawLine = false;
+        this._shouldErase = false;
     };
     /**
-     * Set if drawing is enabled from the client using the canvas
-     * @param {boolean} shouldDraw
+     * Set if line drawing is enabled from the client using the canvas
+     * @param {boolean} shouldDrawPolygon
      */
     CanvasWhiteboardComponent.prototype.setShouldDrawPolygon = function (shouldDrawPolygon) {
         this._shouldDrawPolygon = shouldDrawPolygon;
+        this._shouldDraw = false;
+        this._shouldDrawLine = false;
+        this._shouldErase = false;
+    };
+    /**
+     * Set if line drawing is enabled from the client using the canvas
+     * @param {boolean} shouldDrawPolygon
+     */
+    CanvasWhiteboardComponent.prototype.setShouldDrawLine = function (shouldDrawLine) {
+        this._shouldDrawLine = shouldDrawLine;
+        this._shouldDraw = false;
+        this._shouldDrawPolygon = false;
+        this._shouldErase = false;
+    };
+    /**
+     * Returns a value of whether the user clicked the line button on the canvas.
+     */
+    CanvasWhiteboardComponent.prototype.getShouldDrawLine = function () {
+        return this._shouldDrawLine;
+    };
+    /**
+     * Toggles line drawing on the canvas. It is called via the line button on the canvas.
+     */
+    CanvasWhiteboardComponent.prototype.toggleShouldDrawLine = function () {
+        this._shouldDrawLine = !this._shouldDrawLine;
+        this._shouldDraw = false;
+        this._shouldDrawPolygon = false;
+        this._shouldErase = false;
+    };
+    /**
+     * Set if erasing is enabled from the client using the canvas
+     * @param {boolean} shouldDrawPolygon
+     */
+    CanvasWhiteboardComponent.prototype.setShouldErase = function (shouldErase) {
+        this._shouldErase = shouldErase;
+        this._shouldDraw = false;
+        this._shouldDrawPolygon = false;
+        this._shouldDrawLine = false;
+    };
+    /**
+     * Returns a value of whether the user clicked the erase button on the canvas.
+     */
+    CanvasWhiteboardComponent.prototype.getShouldErase = function () {
+        return this._shouldErase;
+    };
+    /**
+     * Toggles erase on the canvas. It is called via the erase button on the canvas.
+     */
+    CanvasWhiteboardComponent.prototype.toggleShouldErase = function () {
+        this._shouldErase = !this._shouldErase;
+        this._shouldDraw = false;
+        this._shouldDrawPolygon = false;
+        this._shouldDrawLine = false;
     };
     /**
      * Replaces the drawing color with a new color
@@ -347,20 +431,41 @@ var CanvasWhiteboardComponent = (function () {
     CanvasWhiteboardComponent.prototype.undo = function () {
         if (!this._undoStack.length)
             return;
-        var updateUUID = this._undoStack.pop();
-        this._undoCanvas(updateUUID);
+        var updateUUIDs = [this._undoStack.pop()];
+        while (this._undoStack[this._undoStack.length - 1] === updateUUIDs[0]) {
+            this._undoStack.pop();
+        }
+        var updateIndex = this._drawHistory.findIndex(function (update) { return update.getUUID() === updateUUIDs[0]; });
+        if (this._drawHistory[updateIndex].getType() === canvas_whiteboard_update_model_1.UPDATE_TYPE.polygonClose) {
+            var index = updateIndex - 1;
+            while (!!this._drawHistory[index] && this._drawHistory[index].getType() === canvas_whiteboard_update_model_1.UPDATE_TYPE.polygonPoint) {
+                updateUUIDs.push(this._undoStack.pop());
+                index--;
+            }
+        }
+        else if (this._drawHistory[updateIndex].getType() === canvas_whiteboard_update_model_1.UPDATE_TYPE.lineEnd) {
+            var index = updateIndex - 1;
+            while (!!this._drawHistory[index] && this._drawHistory[index].getType() === canvas_whiteboard_update_model_1.UPDATE_TYPE.lineStart) {
+                updateUUIDs.push(this._undoStack.pop());
+                index--;
+            }
+        }
+        this._undoCanvas(updateUUIDs);
     };
     /**
      * This method takes an UUID for an update, and redraws the canvas by making all updates with that uuid invisible
      * @param {string} updateUUID
      * @private
      */
-    CanvasWhiteboardComponent.prototype._undoCanvas = function (updateUUID) {
-        this._redoStack.push(updateUUID);
-        this._drawHistory.forEach(function (update) {
-            if (update.getUUID() === updateUUID) {
-                update.setVisible(false);
-            }
+    CanvasWhiteboardComponent.prototype._undoCanvas = function (updateUUIDs) {
+        var _this = this;
+        updateUUIDs.forEach(function (updateUUID) {
+            _this._redoStack.push(updateUUID);
+            _this._drawHistory.forEach(function (update) {
+                if (update.getUUID() === updateUUID) {
+                    update.setVisible(false);
+                }
+            });
         });
         this._redrawHistory();
     };
@@ -382,20 +487,45 @@ var CanvasWhiteboardComponent = (function () {
     CanvasWhiteboardComponent.prototype.redo = function () {
         if (!this._redoStack.length)
             return;
-        var updateUUID = this._redoStack.pop();
-        this._redoCanvas(updateUUID);
+        var updateUUIDs = [this._redoStack.pop()];
+        while (this._redoStack[this._redoStack.length - 1] === updateUUIDs[0]) {
+            this._redoStack.pop();
+        }
+        var updateIndex = this._drawHistory.findIndex(function (update) { return update.getUUID() === updateUUIDs[0]; });
+        if (this._drawHistory[updateIndex].getType() === canvas_whiteboard_update_model_1.UPDATE_TYPE.polygonPoint) {
+            var index = updateIndex + 1;
+            while (!!this._drawHistory[index] &&
+                this._drawHistory[index].getType() !== canvas_whiteboard_update_model_1.UPDATE_TYPE.polygonClose) {
+                updateUUIDs.push(this._redoStack.pop());
+                index++;
+            }
+            updateUUIDs.push(this._redoStack.pop());
+        }
+        else if (this._drawHistory[updateIndex].getType() === canvas_whiteboard_update_model_1.UPDATE_TYPE.lineStart) {
+            var index = updateIndex + 1;
+            while (!!this._drawHistory[index] &&
+                this._drawHistory[index].getType() !== canvas_whiteboard_update_model_1.UPDATE_TYPE.lineEnd) {
+                updateUUIDs.push(this._redoStack.pop());
+                index++;
+            }
+            updateUUIDs.push(this._redoStack.pop());
+        }
+        this._redoCanvas(updateUUIDs);
     };
     /**
      * This method takes an UUID for an update, and redraws the canvas by making all updates with that uuid visible
      * @param {string} updateUUID
      * @private
      */
-    CanvasWhiteboardComponent.prototype._redoCanvas = function (updateUUID) {
-        this._undoStack.push(updateUUID);
-        this._drawHistory.forEach(function (update) {
-            if (update.getUUID() === updateUUID) {
-                update.setVisible(true);
-            }
+    CanvasWhiteboardComponent.prototype._redoCanvas = function (updateUUIDs) {
+        var _this = this;
+        updateUUIDs.forEach(function (updateUUID) {
+            _this._undoStack.push(updateUUID);
+            _this._drawHistory.forEach(function (update) {
+                if (update.getUUID() === updateUUID) {
+                    update.setVisible(true);
+                }
+            });
         });
         this._redrawHistory();
     };
@@ -415,11 +545,12 @@ var CanvasWhiteboardComponent = (function () {
      *
      */
     CanvasWhiteboardComponent.prototype.canvasUserEvents = function (event) {
-        if (!this._shouldDraw || !this._canDraw || !this._shouldDrawPolygon || !this._canDrawPolygon) {
+        if ((!this._shouldDraw || !this._canDraw) && (!this._shouldDrawPolygon || !this._canDrawPolygon) &&
+            (!this._shouldDrawLine || !this._canDrawLine) && (!this._canDraw || !this._shouldErase)) {
             //Ignore all if we didn't click the _draw! button or the image did not load
             return;
         }
-        if (this._shouldDraw) {
+        if (this._shouldDraw || this._shouldErase) {
             if ((event.type === 'mousemove' || event.type === 'touchmove' || event.type === 'mouseout') && !this._clientDragging) {
                 // Ignore mouse move Events if we're not dragging
                 return;
@@ -452,7 +583,8 @@ var CanvasWhiteboardComponent = (function () {
                     updateType = canvas_whiteboard_update_model_1.UPDATE_TYPE.stop;
                     break;
             }
-            update = new canvas_whiteboard_update_model_1.CanvasWhiteboardUpdate(eventPosition.x, eventPosition.y, updateType, this.strokeColor, this._lastUUID, true);
+            this._redoStack = [];
+            update = new canvas_whiteboard_update_model_1.CanvasWhiteboardUpdate(eventPosition.x, eventPosition.y, updateType, this._shouldErase ? '#ffffff' : this.strokeColor, this._lastUUID, true);
             this._draw(update);
             this._prepareToSendUpdate(update, eventPosition.x, eventPosition.y);
         }
@@ -464,7 +596,7 @@ var CanvasWhiteboardComponent = (function () {
             if (event.target == this.canvas.nativeElement) {
                 event.preventDefault();
             }
-            var update = void 0;
+            var update = null;
             var updateType = void 0;
             var eventPosition = this._getCanvasEventPosition(event);
             switch (event.type) {
@@ -492,16 +624,61 @@ var CanvasWhiteboardComponent = (function () {
                             update = new canvas_whiteboard_update_model_1.CanvasWhiteboardUpdate(eventPosition.x, eventPosition.y, updateType, this.polygonBorderColor, this._lastUUID, true);
                         }
                     }
+                    else {
+                        this._polygonPoints.push(new canvas_whiteboard_update_model_1.CanvasCoordinates(eventPosition.x, eventPosition.y));
+                        updateType = canvas_whiteboard_update_model_1.UPDATE_TYPE.polygonPoint;
+                        update = new canvas_whiteboard_update_model_1.CanvasWhiteboardUpdate(eventPosition.x, eventPosition.y, updateType, this.polygonBorderColor, this._lastUUID, true);
+                    }
                     break;
                 case 'mouseout':
-                    this._lastUUID = eventPosition.x + eventPosition.y + Math.random().toString(36);
-                    this._clientDragging = false;
-                    updateType = canvas_whiteboard_update_model_1.UPDATE_TYPE.stop;
-                    update = new canvas_whiteboard_update_model_1.CanvasWhiteboardUpdate(eventPosition.x, eventPosition.y, updateType, this.strokeColor, this._lastUUID, true);
                     break;
             }
-            this._draw(update);
-            this._prepareToSendUpdate(update, eventPosition.x, eventPosition.y);
+            if (!!update) {
+                this._redoStack = [];
+                this._draw(update);
+                this._prepareToSendUpdate(update, eventPosition.x, eventPosition.y);
+            }
+        }
+        else if (this._shouldDrawLine) {
+            if (event.type !== 'touchend' && event.type !== 'mouseup' && event.type !== 'mouseout') {
+                // Ignore mouse move Events if we're not dragging
+                return;
+            }
+            if (event.target == this.canvas.nativeElement) {
+                event.preventDefault();
+            }
+            var update = null;
+            var updateType = void 0;
+            var eventPosition = this._getCanvasEventPosition(event);
+            switch (event.type) {
+                case 'mousedown':
+                case 'touchstart':
+                case 'mousemove':
+                case 'touchmove':
+                case 'touchcancel':
+                    break;
+                case 'touchend':
+                case 'mouseup':
+                    this._lastUUID = eventPosition.x + eventPosition.y + Math.random().toString(36);
+                    if (this._drawHistory.length !== 0 &&
+                        this._drawHistory[this._drawHistory.length - 1].getType() === canvas_whiteboard_update_model_1.UPDATE_TYPE.lineStart) {
+                        updateType = canvas_whiteboard_update_model_1.UPDATE_TYPE.lineEnd;
+                        update = new canvas_whiteboard_update_model_1.CanvasWhiteboardUpdate(eventPosition.x, eventPosition.y, updateType, this.strokeColor, this._lastUUID, true);
+                        this._polygonPoints = [];
+                    }
+                    else {
+                        updateType = canvas_whiteboard_update_model_1.UPDATE_TYPE.lineStart;
+                        update = new canvas_whiteboard_update_model_1.CanvasWhiteboardUpdate(eventPosition.x, eventPosition.y, updateType, this.strokeColor, this._lastUUID, true);
+                    }
+                    break;
+                case 'mouseout':
+                    break;
+            }
+            if (!!update) {
+                this._redoStack = [];
+                this._draw(update);
+                this._prepareToSendUpdate(update, eventPosition.x, eventPosition.y);
+            }
         }
     };
     /**
@@ -599,6 +776,9 @@ var CanvasWhiteboardComponent = (function () {
         var xToDraw = (mappedCoordinates) ? (update.getX() * this.context.canvas.width) : update.getX();
         var yToDraw = (mappedCoordinates) ? (update.getY() * this.context.canvas.height) : update.getY();
         if (update.getType() === canvas_whiteboard_update_model_1.UPDATE_TYPE.drag) {
+            if (update.getVisible()) {
+                this._undoStack.push(update.getUUID());
+            }
             var lastPosition = this._lastPositionForUUID[update.getUUID()];
             this.context.save();
             this.context.beginPath();
@@ -617,18 +797,64 @@ var CanvasWhiteboardComponent = (function () {
             this.context.restore();
         }
         else if (update.getType() === canvas_whiteboard_update_model_1.UPDATE_TYPE.stop && update.getVisible()) {
-            this._undoStack.push(update.getUUID());
+            // this._undoStack.push(update.getUUID());
             delete this._lastPositionForUUID[update.getUUID()];
         }
         else if (update.getType() === canvas_whiteboard_update_model_1.UPDATE_TYPE.polygonPoint) {
-            if (this._drawHistory[this._drawHistory.length - 2].getType() === canvas_whiteboard_update_model_1.UPDATE_TYPE.polygonPoint) {
-                this.context.lineTo(update.getX(), update.getY());
+            if (this._drawHistory.length > 1 &&
+                this._drawHistory[this._drawHistory.length - 2].getType() === canvas_whiteboard_update_model_1.UPDATE_TYPE.polygonPoint) {
+                this.context.lineTo(xToDraw, yToDraw);
             }
             else {
-                this.context.moveTo(update.getX(), update.getY());
+                this.context.beginPath();
+                this.context.moveTo(xToDraw, yToDraw);
             }
+            if (update.getVisible()) {
+                this._undoStack.push(update.getUUID());
+                this.context.strokeStyle = update.getStrokeColor() || this.polygonBorderColor;
+            }
+            else {
+                this.context.strokeStyle = "rgba(0,0,0,0)";
+            }
+            this.context.stroke();
+            this.context.strokeRect(xToDraw - 3, yToDraw - 3, 6, 6);
         }
         else if (update.getType() === canvas_whiteboard_update_model_1.UPDATE_TYPE.polygonClose) {
+            if (update.getVisible()) {
+                this._undoStack.push(update.getUUID());
+                this.context.fillStyle = this.polygonFillColor;
+            }
+            else {
+                this.context.fillStyle = "rgba(0,0,0,0)";
+            }
+            this.context.closePath();
+            this.context.stroke();
+            this.context.fill();
+            this.context.restore();
+        }
+        else if (update.getType() === canvas_whiteboard_update_model_1.UPDATE_TYPE.lineStart) {
+            this.context.beginPath();
+            this.context.moveTo(xToDraw, yToDraw);
+            if (update.getVisible()) {
+                this._undoStack.push(update.getUUID());
+                this.context.strokeStyle = update.getStrokeColor() || this.strokeColor;
+            }
+            else {
+                this.context.strokeStyle = "rgba(0,0,0,0)";
+            }
+            this.context.stroke();
+            this.context.fillRect(xToDraw - (this.lineWidth / 2), yToDraw - (this.lineWidth / 2), this.lineWidth, this.lineWidth);
+        }
+        else if (update.getType() === canvas_whiteboard_update_model_1.UPDATE_TYPE.lineEnd) {
+            if (update.getVisible()) {
+                this._undoStack.push(update.getUUID());
+                this.context.strokeStyle = update.getStrokeColor() || this.strokeColor;
+            }
+            else {
+                this.context.strokeStyle = "rgba(0,0,0,0)";
+            }
+            this.context.lineWidth = this.lineWidth;
+            this.context.lineTo(xToDraw, yToDraw);
             this.context.closePath();
             this.context.stroke();
             this.context.restore();
@@ -1002,6 +1228,34 @@ var CanvasWhiteboardComponent = (function () {
         core_1.Input(),
         __metadata("design:type", String)
     ], CanvasWhiteboardComponent.prototype, "polygonButtonText", void 0);
+    __decorate([
+        core_1.Input(),
+        __metadata("design:type", Boolean)
+    ], CanvasWhiteboardComponent.prototype, "lineButtonEnabled", void 0);
+    __decorate([
+        core_1.Input(),
+        __metadata("design:type", String)
+    ], CanvasWhiteboardComponent.prototype, "lineButtonClass", void 0);
+    __decorate([
+        core_1.Input(),
+        __metadata("design:type", String)
+    ], CanvasWhiteboardComponent.prototype, "lineButtonText", void 0);
+    __decorate([
+        core_1.Input(),
+        __metadata("design:type", Boolean)
+    ], CanvasWhiteboardComponent.prototype, "eraseButtonEnabled", void 0);
+    __decorate([
+        core_1.Input(),
+        __metadata("design:type", String)
+    ], CanvasWhiteboardComponent.prototype, "eraseButtonClass", void 0);
+    __decorate([
+        core_1.Input(),
+        __metadata("design:type", String)
+    ], CanvasWhiteboardComponent.prototype, "eraseButtonText", void 0);
+    __decorate([
+        core_1.Input(),
+        __metadata("design:type", Boolean)
+    ], CanvasWhiteboardComponent.prototype, "buttonAnimation", void 0);
     __decorate([
         core_1.Input(),
         __metadata("design:type", String)

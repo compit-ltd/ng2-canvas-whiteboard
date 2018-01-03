@@ -3,17 +3,35 @@ export const DEFAULT_TEMPLATE = `
      <span class="canvas_whiteboard_buttons">
          <canvas-whiteboard-colorpicker *ngIf="colorPickerEnabled" [selectedColor]="strokeColor" (onColorSelected)="changeColor($event)"></canvas-whiteboard-colorpicker>
          <button *ngIf="drawButtonEnabled" (click)="toggleShouldDraw()"
-                 [class.canvas_whiteboard_button-draw_animated]="getShouldDraw()"
+                 [class.canvas_whiteboard_button-draw_animated]="buttonAnimation && getShouldDraw()"
+                 [class.selected]="!buttonAnimation && getShouldDraw()"
                  class="canvas_whiteboard_button canvas_whiteboard_button-draw" type="button">
                 <i [class]="drawButtonClass" aria-hidden="true"></i>
                    {{drawButtonText}}
         </button>
         
         <button *ngIf="polygonButtonEnabled" (click)="toggleShouldDrawPolygon()"
-                 [class.canvas_whiteboard_button-draw_animated]="getShouldDrawPolygon()"
+                 [class.canvas_whiteboard_button-draw_animated]="buttonAnimation && getShouldDrawPolygon()"
+                 [class.selected]="!buttonAnimation && getShouldDrawPolygon()"
                  class="canvas_whiteboard_button canvas_whiteboard_button-draw-polygon" type="button">
                 <i [class]="polygonButtonClass" aria-hidden="true"></i>
                    {{polygonButtonText}}
+        </button>
+        
+        <button *ngIf="lineButtonEnabled" (click)="toggleShouldDrawLine()"
+                 [class.canvas_whiteboard_button-draw_animated]="buttonAnimation && getShouldDrawLine()"
+                 [class.selected]="!buttonAnimation && getShouldDrawLine()"
+                 class="canvas_whiteboard_button canvas_whiteboard_button-draw-line" type="button">
+                <i [class]="lineButtonClass" aria-hidden="true"></i>
+                   {{lineButtonText}}
+        </button>
+        
+        <button *ngIf="eraseButtonEnabled" (click)="toggleShouldErase()"
+                 [class.canvas_whiteboard_button-draw_animated]="buttonAnimation && getShouldErase()"
+                 [class.selected]="!buttonAnimation && getShouldErase()"
+                 class="canvas_whiteboard_button canvas_whiteboard_button-erase" type="button">
+                <i [class]="eraseButtonClass" aria-hidden="true"></i>
+                   {{eraseButtonText}}
         </button>
         
         <button *ngIf="clearButtonEnabled" (click)="clearCanvasLocal()" type="button" class="canvas_whiteboard_button canvas_whiteboard_button-clear">
@@ -90,6 +108,15 @@ export const DEFAULT_STYLES = `
 
 .canvas_whiteboard_buttons > button {
     margin: 5px;
+    color: #159adf;
+    background-color: #fff;
+    padding: 4px 14px 3px;
+    border: 1px solid #d0d0d0;
+}
+
+.canvas_whiteboard_buttons > button.selected {
+    color: #fff;
+    background-color: #159adf;
 }
 
 .canvas_whiteboard_button-draw_animated {

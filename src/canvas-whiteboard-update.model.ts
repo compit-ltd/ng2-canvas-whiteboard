@@ -3,7 +3,9 @@ export const UPDATE_TYPE = {
     "drag": 1,
     "stop": 2,
     "polygonPoint": 3,
-    "polygonClose": 4
+    "polygonClose": 4,
+    "lineStart": 5,
+    "lineEnd": 6
 };
 
 export class CanvasCoordinates {
